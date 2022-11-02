@@ -208,6 +208,7 @@ namespace ConsoleApp1
                     result += reader.GetString("name");
                     result += ",";
                     result += reader.GetString("lv");
+                    reader.Close();
                     return result;
                 }
                 else

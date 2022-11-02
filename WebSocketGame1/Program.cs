@@ -60,8 +60,10 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                     Console.WriteLine("开始保存socket");
                                     var strarray = str.Split(",");
                                     userid = strarray[1];
-                                    
-                                    addSocketList(userid, socket);
+                                    if (userid != "")
+                                    {
+                                        addSocketList(userid, socket);
+                                    }
                                 }
                                 break;
                             case Command.Register:
