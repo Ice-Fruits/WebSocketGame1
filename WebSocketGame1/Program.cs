@@ -26,7 +26,10 @@ namespace MyApp // Note: actual namespace depends on the project name.
             server.Start(socket =>
             {
                 string userid = "";
-                socket.OnOpen = () => Console.WriteLine("Open!");
+                socket.OnOpen = () =>
+                {
+                    Console.WriteLine("Open!");
+                };
                 socket.OnClose = () => Console.WriteLine("Close!");
                 //收字符串
                 socket.OnMessage = message =>
@@ -89,7 +92,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 break;
                             case Command.RankList:
                                 {
-
+                                    str += Tool.RankList();
+                                    socket.Send(Encoding.UTF8.GetBytes(str));
                                 }
                                 break;
                         }

@@ -1,7 +1,9 @@
 ﻿using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI.Common;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -193,7 +195,7 @@ namespace ConsoleApp1
                 reader.Read();
                 if (reader.HasRows)//存在
                 {
-                    string userid = reader[2].ToString();
+                    string userid = reader.GetString("userid");
                     Console.WriteLine(userid);
                     reader.Close();
                     //找到后再去查找用户信息表
@@ -201,11 +203,11 @@ namespace ConsoleApp1
                     cmd.CommandText = sql;
                     reader = cmd.ExecuteReader();
                     reader.Read();
-                    string result = reader[0].ToString();
+                    string result = reader.GetString("userid");
                     result += ",";
-                    result += reader[1].ToString();
+                    result += reader.GetString("name");
                     result += ",";
-                    result += reader[2].ToString();
+                    result += reader.GetString("lv");
                     return result;
                 }
                 else
@@ -241,7 +243,7 @@ namespace ConsoleApp1
                 reader.Read();
                 if (reader.HasRows)//存在
                 {
-                    string userid = reader[2].ToString();
+                    string userid = reader.GetString("userid");
                     Console.WriteLine(userid);
                     reader.Close();
                     //找到后再去查找用户信息表
@@ -249,11 +251,12 @@ namespace ConsoleApp1
                     cmd.CommandText = sql;
                     reader = cmd.ExecuteReader();
                     reader.Read();
-                    string result = reader[0].ToString();
+                    string result = reader.GetString("userid");
                     result += ",";
-                    result += reader[1].ToString();
+                    result += reader.GetString("name");
                     result += ",";
-                    result += reader[2].ToString();
+                    result += reader.GetString("lv");
+                    reader.Close();
                     return result;
                 }
                 else
@@ -265,25 +268,24 @@ namespace ConsoleApp1
                     Console.WriteLine("创建用户" + userid);
                     sql = String.Format("INSERT INTO game1.users(qudaoid, userid) VALUES('{0}', '{1}')", qudaoid, userid);
                     cmd.CommandText = sql;
-                    reader = cmd.ExecuteReader();
-                    reader.Read();
-                    reader.Close();
+                    int num = cmd.ExecuteNonQuery();
+                    
 
                     //找到后再去查找用户信息表
                     sql = String.Format("INSERT INTO game1.usersinfo(userid, name) VALUES('{0}', '{1}')", userid, name);
                     cmd.CommandText = sql;
-                    reader = cmd.ExecuteReader();
-                    reader.Read();
-                    reader.Close();
+                    num = cmd.ExecuteNonQuery();
+
                     sql = String.Format("SELECT * FROM game1.usersinfo WHERE userid='{0}'", userid);
                     cmd.CommandText = sql;
                     reader = cmd.ExecuteReader();
                     reader.Read();
-                    string result = reader[0].ToString();
+                    string result = reader.GetString("userid");
                     result += ",";
-                    result += reader[1].ToString();
+                    result += reader.GetString("name");
                     result += ",";
-                    result += reader[2].ToString();
+                    result += reader.GetString("lv");
+                    reader.Close();
                     return result;
                 }
 
@@ -319,10 +321,9 @@ namespace ConsoleApp1
                     //找到后再去查找用户信息表
                     sql = String.Format("UPDATE game1.rank SET score = '{0}' WHERE userid = '{1}' ", score, userid);
                     cmd.CommandText = sql;
-                    reader = cmd.ExecuteReader();
-                    reader.Read();
+                    int rowCount = cmd.ExecuteNonQuery();
                     string result = "";
-                    if (reader.HasRows)
+                    if (rowCount > 0)
                     {
                         result = "success";
                     }
@@ -336,13 +337,14 @@ namespace ConsoleApp1
                     Console.WriteLine("创建排行" + userid);
                     sql = String.Format("INSERT INTO game1.rank(userid, score) VALUES('{0}', '{1}')", userid, score);
                     cmd.CommandText = sql;
-                    reader = cmd.ExecuteReader();
-                    reader.Read();
+                    int rowCount = cmd.ExecuteNonQuery();
                     string result = "";
-                    if (reader.HasRows)
+
+                    if (rowCount > 0)
                     {
                         result = "success";
                     }
+
                     return result;
                 }
 
@@ -366,31 +368,60 @@ namespace ConsoleApp1
                 conn.Open();//建立连接
                 Console.WriteLine("已经与数据库建立连接");
 
-                string sql = String.Format("SELECT * FROM game1.rank limit 100");//数据库操作命令,读取数据行数
+                string sql = String.Format("SELECT * FROM game1.rank ORDER BY score DESC limit 100");//数据库操作命令,读取数据行数
 
                 MySqlCommand cmd = new MySqlCommand(sql, conn);//数据库命令类
                 MySqlDataReader reader = cmd.ExecuteReader();
-                reader.Read();
-                if (reader.HasRows)//存在
+                //reader.Read();
+
+                ArrayList useridarray = new ArrayList();
+                ArrayList scorearray = new ArrayList();
+                while (reader.Read())//Read每次调用会返回Ture或False的值，使用while循环来全部遍历
                 {
-                    reader.Close();
-                    //找到后再去查找用户信息表
-                    sql = String.Format("UPDATE game1.rank SET score = '{0}' WHERE userid = '{1}' ", score, userid);
-                    cmd.CommandText = sql;
-                    reader = cmd.ExecuteReader();
-                    reader.Read();
-                    string result = "";
-                    if (reader.HasRows)
+                    if (reader.HasRows)//存在
                     {
-                        result = "success";
+                        useridarray.Add(reader.GetString("userid"));
+                        scorearray.Add(reader.GetString("score"));
+                        //string userid = reader.GetString("userid");
+                        //string score = reader.GetString("score");
                     }
-                    return result;
                 }
-                else
+                reader.Close();
+
+                sql = "SELECT name FROM game1.usersinfo WHERE userid in(";
+                for (int i = 0;i < useridarray.Count; i++)
                 {
-                    
-                    return "";
+                    sql += "'"+ useridarray[i] + "'";
+                    if(i < useridarray.Count - 1)
+                    {
+                        sql += ",";
+                    }
                 }
+                sql += ")";
+                cmd.CommandText = sql;
+                reader = cmd.ExecuteReader();
+                ArrayList namearray = new ArrayList();
+                while (reader.Read())//Read每次调用会返回Ture或False的值，使用while循环来全部遍历
+                {
+                    if (reader.HasRows)//存在
+                    {
+                        namearray.Add(reader.GetString("name"));
+                    }
+                }
+                reader.Close();
+                string result = "";
+                for (int i = 0; i < useridarray.Count; i++)
+                {
+                    result += useridarray[i] + ",";
+                    result += namearray[i] + ",";
+                    result += scorearray[i];
+
+                    if (i < useridarray.Count - 1)
+                    {
+                        result += ",";
+                    }
+                }
+                return result;
 
             }
             catch (Exception e)
