@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Bcpg;
 using System.Net.Sockets;
 using System.Text;
+using WebSocketGame1;
 
 namespace MyApp // Note: actual namespace depends on the project name.
 {
@@ -24,6 +25,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
 
         static void Main(string[] args)
         {
+            var ranklist = new RankList();
+
             var server = new WebSocketServer("ws://0.0.0.0:8181");
             server.Start(socket =>
             {
@@ -58,7 +61,6 @@ namespace MyApp // Note: actual namespace depends on the project name.
                         {
                             case Command.Login:
                                 {
-                                    //Tool.getCountry(socket.ConnectionInfo.ClientIpAddress);
                                     Console.WriteLine("开始登陆");
                                     string qudaoid = dicContent["qudaoid"];
                                     result = Tool.Login(qudaoid);
@@ -97,7 +99,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 break;
                             case Command.RankList:
                                 {
-                                    result = Tool.RankList();
+                                    //不实时请求数据库，读取缓存的数据
+                                    result = ranklist.getList();
                                     
                                 }
                                 break;
@@ -125,8 +128,11 @@ namespace MyApp // Note: actual namespace depends on the project name.
             if (sockets.ContainsKey(userid))
             {
                 //列表中已有该用户就踢掉上个连接
-                var str = (int)Command.Kickout + ",";
-                sockets[userid].Send(Encoding.UTF8.GetBytes(str));
+                JObject result = new JObject();
+                result.Add("command", (int)Command.Kickout);
+                string resultStr = JsonConvert.SerializeObject(result);
+
+                sockets[userid].Send(Encoding.UTF8.GetBytes(resultStr));
                 sockets[userid].Close();
                 sockets[userid] = socket;
             }

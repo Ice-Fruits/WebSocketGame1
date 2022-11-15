@@ -436,7 +436,7 @@ namespace ConsoleApp1
             try
             {
                 
-                HttpWebRequest wbRequest = (HttpWebRequest)WebRequest.Create("http://ip.taobao.com/service/getIpInfo.php?ip="+ip);
+                HttpWebRequest wbRequest = (HttpWebRequest)WebRequest.Create("http://ip-api.com/json/" + ip);
                 wbRequest.Proxy = null;
                 wbRequest.Method = "GET";
                 HttpWebResponse wbResponse = (HttpWebResponse)wbRequest.GetResponse();
@@ -445,6 +445,7 @@ namespace ConsoleApp1
                     using (StreamReader sReader = new StreamReader(responseStream))
                     {
                         result = sReader.ReadToEnd();
+
                     }
                 }
             }
