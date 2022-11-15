@@ -1,10 +1,14 @@
 ﻿using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI.Common;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -180,8 +184,9 @@ namespace ConsoleApp1
             }
         }
 
-        public static string Login(string qudaoid)
+        public static JObject Login(string qudaoid)
         {
+            var resultContent = new JObject();
             MySqlConnection conn = new MySqlConnection(Tool.connectStr);//还未与数据库建立连接
             try//捕捉异常，并打印
             {
@@ -203,34 +208,32 @@ namespace ConsoleApp1
                     cmd.CommandText = sql;
                     reader = cmd.ExecuteReader();
                     reader.Read();
-                    string result = reader.GetString("userid");
-                    result += ",";
-                    result += reader.GetString("name");
-                    result += ",";
-                    result += reader.GetString("lv");
+                    resultContent.Add("userid", reader.GetString("userid"));
+                    resultContent.Add("name", reader.GetString("name"));
+                    resultContent.Add("lv", reader.GetString("lv"));
                     reader.Close();
-                    return result;
                 }
                 else
                 {
                     //不存在
-                    return "";
                 }
                 
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-                return "";
             }
             finally//无论如何都会去执行的语句
             {
                 conn.Close();//关闭连接
             }
+            return resultContent;
+
         }
 
-        public static string Register(string qudaoid,string name)
+        public static JObject Register(string qudaoid,string name)
         {
+            var resultContent = new JObject();
             MySqlConnection conn = new MySqlConnection(Tool.connectStr);//还未与数据库建立连接
             try//捕捉异常，并打印
             {
@@ -252,13 +255,10 @@ namespace ConsoleApp1
                     cmd.CommandText = sql;
                     reader = cmd.ExecuteReader();
                     reader.Read();
-                    string result = reader.GetString("userid");
-                    result += ",";
-                    result += reader.GetString("name");
-                    result += ",";
-                    result += reader.GetString("lv");
+                    resultContent.Add("userid", reader.GetString("userid"));
+                    resultContent.Add("name", reader.GetString("name"));
+                    resultContent.Add("lv", reader.GetString("lv"));
                     reader.Close();
-                    return result;
                 }
                 else
                 {
@@ -281,29 +281,26 @@ namespace ConsoleApp1
                     cmd.CommandText = sql;
                     reader = cmd.ExecuteReader();
                     reader.Read();
-                    string result = reader.GetString("userid");
-                    result += ",";
-                    result += reader.GetString("name");
-                    result += ",";
-                    result += reader.GetString("lv");
+                    resultContent.Add("userid", reader.GetString("userid"));
+                    resultContent.Add("name", reader.GetString("name"));
+                    resultContent.Add("lv", reader.GetString("lv"));
                     reader.Close();
-                    return result;
                 }
-
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-                return "";
             }
             finally//无论如何都会去执行的语句
             {
                 conn.Close();//关闭连接
             }
+            return resultContent;
         }
 
-        public static string Rank(string userid, string score)
+        public static JObject Rank(string userid, string score)
         {
+            var resultContent = new JObject();
             MySqlConnection conn = new MySqlConnection(Tool.connectStr);//还未与数据库建立连接
             try//捕捉异常，并打印
             {
@@ -317,18 +314,20 @@ namespace ConsoleApp1
                 reader.Read();
                 if (reader.HasRows)//存在
                 {
-                    Console.WriteLine(userid);
+                    int oldscore = reader.GetInt16("score");
+                    int newscore = int.Parse(score);
                     reader.Close();
-                    //找到后再去查找用户信息表
-                    sql = String.Format("UPDATE game1.rank SET score = '{0}' WHERE userid = '{1}' ", score, userid);
-                    cmd.CommandText = sql;
-                    int rowCount = cmd.ExecuteNonQuery();
-                    string result = "";
-                    if (rowCount > 0)
+                    if (newscore > oldscore)
                     {
-                        result = "success";
+                        //找到后再去查找用户信息表
+                        sql = String.Format("UPDATE game1.rank SET score = '{0}' WHERE userid = '{1}' ", score, userid);
+                        cmd.CommandText = sql;
+                        int rowCount = cmd.ExecuteNonQuery();
+                        if (rowCount > 0)
+                        {
+                            resultContent.Add("result", "true");
+                        }
                     }
-                    return result;
                 }
                 else
                 {
@@ -339,30 +338,30 @@ namespace ConsoleApp1
                     sql = String.Format("INSERT INTO game1.rank(userid, score) VALUES('{0}', '{1}')", userid, score);
                     cmd.CommandText = sql;
                     int rowCount = cmd.ExecuteNonQuery();
-                    string result = "";
 
                     if (rowCount > 0)
                     {
-                        result = "success";
+                        resultContent.Add("result", "true");
                     }
 
-                    return result;
                 }
 
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-                return "";
             }
             finally//无论如何都会去执行的语句
             {
                 conn.Close();//关闭连接
             }
+            return resultContent;
         }
 
-        public static string RankList()
+        public static JObject RankList()
         {
+            var resultContent = new JObject();
+
             MySqlConnection conn = new MySqlConnection(Tool.connectStr);//还未与数据库建立连接
             try//捕捉异常，并打印
             {
@@ -374,15 +373,15 @@ namespace ConsoleApp1
                 MySqlCommand cmd = new MySqlCommand(sql, conn);//数据库命令类
                 MySqlDataReader reader = cmd.ExecuteReader();
                 //reader.Read();
-
-                ArrayList useridarray = new ArrayList();
-                ArrayList scorearray = new ArrayList();
+                JArray jArray = new JArray();
                 while (reader.Read())//Read每次调用会返回Ture或False的值，使用while循环来全部遍历
                 {
                     if (reader.HasRows)//存在
                     {
-                        useridarray.Add(reader.GetString("userid"));
-                        scorearray.Add(reader.GetString("score"));
+                        var itemContent = new JObject();
+                        itemContent.Add("userid", reader.GetString("userid"));
+                        itemContent.Add("score", reader.GetString("score"));
+                        jArray.Add(itemContent);
                         //string userid = reader.GetString("userid");
                         //string score = reader.GetString("score");
                     }
@@ -390,51 +389,71 @@ namespace ConsoleApp1
                 reader.Close();
 
                 sql = "SELECT name FROM game1.usersinfo WHERE userid in(";
-                for (int i = 0;i < useridarray.Count; i++)
+                string useridstr = "";
+                for (int i = 0;i < jArray.Count; i++)
                 {
-                    sql += "'"+ useridarray[i] + "'";
-                    if(i < useridarray.Count - 1)
+                    useridstr += "'"+ jArray[i]["userid"] + "'";
+                    if(i < jArray.Count - 1)
                     {
-                        sql += ",";
+                        useridstr += ",";
                     }
                 }
+                sql += useridstr;
+                sql += ") ORDER BY FIELD(userid,";
+                sql += useridstr;
                 sql += ")";
                 cmd.CommandText = sql;
                 reader = cmd.ExecuteReader();
-                ArrayList namearray = new ArrayList();
+                int index = 0;
                 while (reader.Read())//Read每次调用会返回Ture或False的值，使用while循环来全部遍历
                 {
                     if (reader.HasRows)//存在
                     {
-                        namearray.Add(reader.GetString("name"));
+                        var itemContent = (JObject)jArray[index];
+                        itemContent.Add("name", reader.GetString("name"));
+                        //itemContent.Add("name", reader.GetString("name"));
+                        index++;
                     }
                 }
                 reader.Close();
-                string result = "";
-                for (int i = 0; i < useridarray.Count; i++)
-                {
-                    result += useridarray[i] + ",";
-                    result += namearray[i] + ",";
-                    result += scorearray[i];
-
-                    if (i < useridarray.Count - 1)
-                    {
-                        result += ",";
-                    }
-                }
-                return result;
-
+                resultContent.Add("ranklist", jArray);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-                return "";
             }
             finally//无论如何都会去执行的语句
             {
                 conn.Close();//关闭连接
             }
-        }
+            return resultContent;
 
+        }
+        public static string getCountry(string ip)
+        {
+        
+            string result = "";
+            try
+            {
+                
+                HttpWebRequest wbRequest = (HttpWebRequest)WebRequest.Create("http://ip.taobao.com/service/getIpInfo.php?ip="+ip);
+                wbRequest.Proxy = null;
+                wbRequest.Method = "GET";
+                HttpWebResponse wbResponse = (HttpWebResponse)wbRequest.GetResponse();
+                using (Stream responseStream = wbResponse.GetResponseStream())
+                {
+                    using (StreamReader sReader = new StreamReader(responseStream))
+                    {
+                        result = sReader.ReadToEnd();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                result = e.Message;     //输出捕获到的异常，用OUT关键字输出
+                return "";              //出现异常，函数的返回值为-1
+            }
+            return "";
+        }
     }
 }

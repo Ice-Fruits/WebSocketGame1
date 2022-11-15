@@ -33,3 +33,4 @@ D:\WebSocketGame1\WebSocketGame1\bin\Debug\net6.0\runtimes\unix\lib\netcoreapp3.
 D:\WebSocketGame1\WebSocketGame1\bin\Debug\net6.0\runtimes\win\lib\netcoreapp3.0\System.Drawing.Common.dll
 D:\WebSocketGame1\WebSocketGame1\bin\Debug\net6.0\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
 D:\WebSocketGame1\WebSocketGame1\bin\Debug\net6.0\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
+D:\WebSocketGame1\WebSocketGame1\bin\Debug\net6.0\Newtonsoft.Json.dll

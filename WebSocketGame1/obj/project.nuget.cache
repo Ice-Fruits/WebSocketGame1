@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "UpWI//sYVvrFaZZsemx/IlouQKvP+wrJJpDxHHmFCWMlzcw90Hwn0UkUx9qpa93wNRVDLYO0p94UETIFxPyeng==",
+  "dgSpecHash": "eHllDOqepPf8K1/A5LGg6NuAiv2Ihb3P8pGZIf02A+79hrvZiODxTCq2f3yksiOAcogF+NUT+RP8Ho1u9FRVKA==",
   "success": true,
   "projectFilePath": "D:\\WebSocketGame1\\WebSocketGame1\\WebSocketGame1.csproj",
   "expectedPackageFiles": [
@@ -12,6 +12,7 @@
     "C:\\Users\\Wyler\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.0\\microsoft.netcore.platforms.3.1.0.nupkg.sha512",
     "C:\\Users\\Wyler\\.nuget\\packages\\microsoft.win32.systemevents\\4.7.0\\microsoft.win32.systemevents.4.7.0.nupkg.sha512",
     "C:\\Users\\Wyler\\.nuget\\packages\\mysql.data\\8.0.31\\mysql.data.8.0.31.nupkg.sha512",
+    "C:\\Users\\Wyler\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512",
     "C:\\Users\\Wyler\\.nuget\\packages\\portable.bouncycastle\\1.9.0\\portable.bouncycastle.1.9.0.nupkg.sha512",
     "C:\\Users\\Wyler\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\Wyler\\.nuget\\packages\\system.configuration.configurationmanager\\4.4.1\\system.configuration.configurationmanager.4.4.1.nupkg.sha512",

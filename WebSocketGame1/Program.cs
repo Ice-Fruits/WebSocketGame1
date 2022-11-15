@@ -1,6 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using ConsoleApp1;
 using Fleck;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Bcpg;
 using System.Net.Sockets;
 using System.Text;
@@ -31,35 +33,39 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     Console.WriteLine("Open!");
                 };
                 socket.OnClose = () => Console.WriteLine("Close!");
+                socket.OnError = message =>
+                {
+                    Console.WriteLine("error:" + message);
+                };
                 //收字符串
                 socket.OnMessage = message =>
                 {
                     Console.WriteLine(message);
                     //socket.Send(message);
                 };
+                
                 //收字节数组
                 socket.OnBinary = binary =>
                 {
                     string strContent = Encoding.UTF8.GetString(binary, 0, binary.Length);
-                    Console.WriteLine("接收客户端消息{0}", strContent);
+                    Console.WriteLine("接收客户端{0}消息{1}", socket.ConnectionInfo.ClientIpAddress,strContent);
                     //开始解析
-                    var array = strContent.Split(",");
-                    if (array.Length > 0)
+                    Dictionary<string, string> dicContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(strContent.ToString());
+                    if(dicContent != null)
                     {
-                        string str = array[0] + ",";//回传值加上消息头
-                        switch ((Command)int.Parse(array[0]))
+                        JObject? result = null;
+                        switch ((Command)int.Parse(dicContent["command"]))
                         {
                             case Command.Login:
                                 {
+                                    //Tool.getCountry(socket.ConnectionInfo.ClientIpAddress);
                                     Console.WriteLine("开始登陆");
-                                    string qudaoid = array[1];
-                                    str += Tool.Login(qudaoid);
-                                    //返回给客户端
-                                    socket.Send(Encoding.UTF8.GetBytes(str));
+                                    string qudaoid = dicContent["qudaoid"];
+                                    result = Tool.Login(qudaoid);
 
                                     Console.WriteLine("开始保存socket");
-                                    var strarray = str.Split(",");
-                                    userid = strarray[1];
+
+                                    userid = result["userid"].ToString();
                                     if (userid != "")
                                     {
                                         addSocketList(userid, socket);
@@ -69,15 +75,12 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             case Command.Register:
                                 {
                                     Console.WriteLine("开始注册");
-                                    string qudaoid = array[1];
-                                    string name = array[2];
-                                    str += Tool.Register(qudaoid, name);
-                                    //返回给客户端
-                                    socket.Send(Encoding.UTF8.GetBytes(str));
+                                    string qudaoid = dicContent["qudaoid"];
+                                    string name = dicContent["name"];
+                                    result = Tool.Register(qudaoid, name);
 
                                     Console.WriteLine("开始保存socket");
-                                    var strarray = str.Split(",");
-                                    userid = strarray[1];
+                                    userid = result["userid"].ToString();
 
                                     addSocketList(userid, socket);
                                 }
@@ -85,20 +88,28 @@ namespace MyApp // Note: actual namespace depends on the project name.
                             case Command.Rank:
                                 {
                                     Console.WriteLine("记录排行");
-                                    if(userid != "")
+                                    if (userid != "")
                                     {
-                                        string score = array[1];
-                                        str += Tool.Rank(userid, score);
+                                        string score = dicContent["score"];
+                                        result = Tool.Rank(userid, score);
                                     }
                                 }
                                 break;
                             case Command.RankList:
                                 {
-                                    str += Tool.RankList();
-                                    socket.Send(Encoding.UTF8.GetBytes(str));
+                                    result = Tool.RankList();
+                                    
                                 }
                                 break;
                         }
+                        if (result != null)
+                        {
+                            result.Add("command", dicContent["command"]);
+                            string resultStr = JsonConvert.SerializeObject(result);
+                            //返回给客户端
+                            socket.Send(Encoding.UTF8.GetBytes(resultStr));
+                        }
+                        
                     }
                 };
             });
