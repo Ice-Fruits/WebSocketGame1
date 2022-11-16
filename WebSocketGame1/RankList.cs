@@ -19,9 +19,10 @@ namespace WebSocketGame1
 
         
 
-        private void timerCall(object obj)
+        private void timerCall(object? obj)
         {
             m_list = Tool.RankList();
+            Console.WriteLine("刷新一次排行榜");
         }
 
         public JObject getList()

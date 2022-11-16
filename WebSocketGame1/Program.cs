@@ -16,7 +16,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
         {
             Login = 10001, //登录
             Register,
-            Kickout, //踢出
+            UserInfo,
+            KickOut, //踢出
             Rank = 20001,
             RankList,
         };
@@ -53,38 +54,67 @@ namespace MyApp // Note: actual namespace depends on the project name.
                     string strContent = Encoding.UTF8.GetString(binary, 0, binary.Length);
                     Console.WriteLine("接收客户端{0}消息{1}", socket.ConnectionInfo.ClientIpAddress,strContent);
                     //开始解析
-                    Dictionary<string, string> dicContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(strContent.ToString());
+                    JObject dicContent = JsonConvert.DeserializeObject<JObject>(strContent.ToString());
                     if(dicContent != null)
                     {
-                        JObject? result = null;
-                        switch ((Command)int.Parse(dicContent["command"]))
+                        switch ((Command)int.Parse(dicContent["command"].ToString()))
                         {
                             case Command.Login:
                                 {
                                     Console.WriteLine("开始登陆");
-                                    string qudaoid = dicContent["qudaoid"];
-                                    result = Tool.Login(qudaoid);
+                                    string qudaoid = dicContent["qudaoid"].ToString();
+                                    var result = Tool.Login(qudaoid);
+                                    result.Add("command", dicContent["command"]);
+                                    string resultStr = JsonConvert.SerializeObject(result);
+                                    //返回给客户端
+                                    socket.Send(Encoding.UTF8.GetBytes(resultStr));
 
                                     Console.WriteLine("开始保存socket");
 
-                                    userid = result["userid"].ToString();
-                                    if (userid != "")
+                                    if (result["userid"]!= null)
                                     {
+                                        userid = result["userid"].ToString();
+
                                         addSocketList(userid, socket);
+
+                                        //更新所在省
+                                        string region = Tool.updateRegion(userid, socket.ConnectionInfo.ClientIpAddress);
+                                        if (region != "")
+                                        {
+                                            result["region"] = region;
+                                            result["command"] = ((int)Command.UserInfo);
+                                            resultStr = JsonConvert.SerializeObject(result);
+                                            //返回给客户端
+                                            socket.Send(Encoding.UTF8.GetBytes(resultStr));
+                                        }
                                     }
                                 }
                                 break;
                             case Command.Register:
                                 {
                                     Console.WriteLine("开始注册");
-                                    string qudaoid = dicContent["qudaoid"];
-                                    string name = dicContent["name"];
-                                    result = Tool.Register(qudaoid, name);
+                                    string qudaoid = dicContent["qudaoid"].ToString();
+                                    string name = dicContent["name"].ToString();
+                                    var result = Tool.Register(qudaoid, name);
+                                    result.Add("command", dicContent["command"]);
+                                    string resultStr = JsonConvert.SerializeObject(result);
+                                    //返回给客户端
+                                    socket.Send(Encoding.UTF8.GetBytes(resultStr));
 
                                     Console.WriteLine("开始保存socket");
                                     userid = result["userid"].ToString();
 
                                     addSocketList(userid, socket);
+                                    //更新所在省
+                                    string region = Tool.updateRegion(userid, socket.ConnectionInfo.ClientIpAddress);
+                                    if (region != "")
+                                    {
+                                        result["region"] = region;
+                                    }
+                                    result["command"] = ((int)Command.UserInfo);
+                                    resultStr = JsonConvert.SerializeObject(result);
+                                    //返回给客户端
+                                    socket.Send(Encoding.UTF8.GetBytes(resultStr));
                                 }
                                 break;
                             case Command.Rank:
@@ -92,25 +122,26 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                     Console.WriteLine("记录排行");
                                     if (userid != "")
                                     {
-                                        string score = dicContent["score"];
-                                        result = Tool.Rank(userid, score);
+                                        string score = dicContent["score"].ToString();
+                                        var result = Tool.Rank(userid, score);
+                                        result.Add("command", dicContent["command"]);
+                                        string resultStr = JsonConvert.SerializeObject(result);
+                                        //返回给客户端
+                                        socket.Send(Encoding.UTF8.GetBytes(resultStr));
                                     }
                                 }
                                 break;
                             case Command.RankList:
                                 {
                                     //不实时请求数据库，读取缓存的数据
-                                    result = ranklist.getList();
-                                    
+                                    var result = ranklist.getList();
+                                    result.Add("command", dicContent["command"]);
+                                    string resultStr = JsonConvert.SerializeObject(result);
+                                    //返回给客户端
+                                    socket.Send(Encoding.UTF8.GetBytes(resultStr));
+
                                 }
                                 break;
-                        }
-                        if (result != null)
-                        {
-                            result.Add("command", dicContent["command"]);
-                            string resultStr = JsonConvert.SerializeObject(result);
-                            //返回给客户端
-                            socket.Send(Encoding.UTF8.GetBytes(resultStr));
                         }
                         
                     }
@@ -129,7 +160,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
             {
                 //列表中已有该用户就踢掉上个连接
                 JObject result = new JObject();
-                result.Add("command", (int)Command.Kickout);
+                result.Add("command", (int)Command.KickOut);
                 string resultStr = JsonConvert.SerializeObject(result);
 
                 sockets[userid].Send(Encoding.UTF8.GetBytes(resultStr));

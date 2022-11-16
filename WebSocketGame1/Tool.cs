@@ -6,11 +6,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace ConsoleApp1
 {
@@ -211,6 +215,7 @@ namespace ConsoleApp1
                     resultContent.Add("userid", reader.GetString("userid"));
                     resultContent.Add("name", reader.GetString("name"));
                     resultContent.Add("lv", reader.GetString("lv"));
+                    resultContent.Add("region", reader.GetString("region"));
                     reader.Close();
                 }
                 else
@@ -258,6 +263,7 @@ namespace ConsoleApp1
                     resultContent.Add("userid", reader.GetString("userid"));
                     resultContent.Add("name", reader.GetString("name"));
                     resultContent.Add("lv", reader.GetString("lv"));
+                    resultContent.Add("region", reader.GetString("region"));
                     reader.Close();
                 }
                 else
@@ -284,6 +290,7 @@ namespace ConsoleApp1
                     resultContent.Add("userid", reader.GetString("userid"));
                     resultContent.Add("name", reader.GetString("name"));
                     resultContent.Add("lv", reader.GetString("lv"));
+                    resultContent.Add("region", reader.GetString("region"));
                     reader.Close();
                 }
             }
@@ -429,13 +436,41 @@ namespace ConsoleApp1
             return resultContent;
 
         }
-        public static string getCountry(string ip)
+
+        public static string updateRegion(string userid, string ip)
         {
-        
+            string region = Tool.getRegion(ip);
+            MySqlConnection conn = new MySqlConnection(connectStr);//还未与数据库建立连接
+            try//捕捉异常，并打印
+            {
+                conn.Open();//建立连接
+                Console.WriteLine("已经与数据库建立连接");
+
+                string sql = String.Format("UPDATE game1.usersinfo SET region = '{0}' WHERE userid = '{1}' ", region, userid);
+
+                MySqlCommand cmd = new MySqlCommand(sql, conn);//数据库命令类
+                int result = cmd.ExecuteNonQuery();//返回值是数据库受影响行数的记录
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            finally//无论如何都会去执行的语句
+            {
+                conn.Close();//关闭连接
+            }
+            return region;
+        }
+        public static string getRegion(string ip)
+        {
             string result = "";
             try
             {
-                
+#if DEBUG
+                ip = "125.120.37.203";
+#else
+#endif
                 HttpWebRequest wbRequest = (HttpWebRequest)WebRequest.Create("http://ip-api.com/json/" + ip);
                 wbRequest.Proxy = null;
                 wbRequest.Method = "GET";
@@ -444,17 +479,18 @@ namespace ConsoleApp1
                 {
                     using (StreamReader sReader = new StreamReader(responseStream))
                     {
-                        result = sReader.ReadToEnd();
-
+                        var readersStr = sReader.ReadToEnd();
+                        //开始解析
+                        JObject dicContent = JsonConvert.DeserializeObject<JObject>(readersStr.ToString());
+                        result = dicContent["regionName"].ToString();
                     }
                 }
             }
             catch (Exception e)
             {
-                result = e.Message;     //输出捕获到的异常，用OUT关键字输出
-                return "";              //出现异常，函数的返回值为-1
+                result = "";     //输出捕获到的异常，用OUT关键字输出
             }
-            return "";
+            return result;
         }
     }
 }
