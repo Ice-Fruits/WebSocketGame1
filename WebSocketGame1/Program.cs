@@ -20,6 +20,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
             KickOut, //踢出
             Rank = 20001,
             RankList,
+            StartGame = 30001,
         };
 
         private static Dictionary<string, IWebSocketConnection> sockets = new Dictionary<string, IWebSocketConnection>();
@@ -135,11 +136,23 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 {
                                     //不实时请求数据库，读取缓存的数据
                                     var result = ranklist.getList();
-                                    result.Add("command", dicContent["command"]);
+                                    if(result["command"] == null)
+                                    {
+                                        result.Add("command", dicContent["command"]);
+                                    }
                                     string resultStr = JsonConvert.SerializeObject(result);
                                     //返回给客户端
                                     socket.Send(Encoding.UTF8.GetBytes(resultStr));
 
+                                }
+                                break;
+                            case Command.StartGame:
+                                {
+                                    var result = Tool.StartGame(userid);
+                                    result.Add("command", dicContent["command"]);
+                                    string resultStr = JsonConvert.SerializeObject(result);
+                                    //返回给客户端
+                                    socket.Send(Encoding.UTF8.GetBytes(resultStr));
                                 }
                                 break;
                         }

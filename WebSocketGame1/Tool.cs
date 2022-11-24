@@ -216,6 +216,7 @@ namespace ConsoleApp1
                     resultContent.Add("name", reader.GetString("name"));
                     resultContent.Add("lv", reader.GetString("lv"));
                     resultContent.Add("region", reader.GetString("region"));
+                    resultContent.Add("power", reader.GetString("power"));
                     reader.Close();
                 }
                 else
@@ -264,6 +265,7 @@ namespace ConsoleApp1
                     resultContent.Add("name", reader.GetString("name"));
                     resultContent.Add("lv", reader.GetString("lv"));
                     resultContent.Add("region", reader.GetString("region"));
+                    resultContent.Add("power", reader.GetString("power"));
                     reader.Close();
                 }
                 else
@@ -291,6 +293,7 @@ namespace ConsoleApp1
                     resultContent.Add("name", reader.GetString("name"));
                     resultContent.Add("lv", reader.GetString("lv"));
                     resultContent.Add("region", reader.GetString("region"));
+                    resultContent.Add("power", reader.GetString("power"));
                     reader.Close();
                 }
             }
@@ -462,6 +465,36 @@ namespace ConsoleApp1
             }
             return region;
         }
+
+        public static JObject StartGame(string userid)
+        {
+            var resultContent = new JObject();
+            MySqlConnection conn = new MySqlConnection(connectStr);//还未与数据库建立连接
+            try//捕捉异常，并打印
+            {
+                conn.Open();//建立连接
+                Console.WriteLine("已经与数据库建立连接");
+
+                string sql = String.Format("UPDATE game1.usersinfo SET power = power - 10 WHERE userid = '{0}' ", userid);
+
+                MySqlCommand cmd = new MySqlCommand(sql, conn);//数据库命令类
+                int result = cmd.ExecuteNonQuery();//返回值是数据库受影响行数的记录
+                if(result > 0)
+                {
+                    resultContent.Add("result", "true");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            finally//无论如何都会去执行的语句
+            {
+                conn.Close();//关闭连接
+            }
+            return resultContent;
+        }
+
         public static string getRegion(string ip)
         {
             string result = "";
