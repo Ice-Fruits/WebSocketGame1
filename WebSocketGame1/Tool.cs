@@ -16,11 +16,11 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Formats.Asn1.AsnWriter;
 
-namespace ConsoleApp1
+namespace WebSocketGame1
 {
     internal class Tool
     {
-        static string connectStr = "server=127.0.0.1;port=3306;database=game1;user=root;password=hqq88888;";//sql连接数据参数
+        public static string connectStr = "server=127.0.0.1;port=3306;database=game1;user=root;password=hqq88888;";//sql连接数据参数
         static void Read()
         {
             MySqlConnection conn = new MySqlConnection(connectStr);//还未与数据库建立连接
@@ -214,9 +214,9 @@ namespace ConsoleApp1
                     reader.Read();
                     resultContent.Add("userid", reader.GetString("userid"));
                     resultContent.Add("name", reader.GetString("name"));
-                    resultContent.Add("lv", reader.GetString("lv"));
+                    resultContent.Add("lv", reader.GetInt32("lv"));
                     resultContent.Add("region", reader.GetString("region"));
-                    resultContent.Add("power", reader.GetString("power"));
+                    resultContent.Add("power", reader.GetInt32("power"));
                     reader.Close();
                 }
                 else
@@ -263,9 +263,9 @@ namespace ConsoleApp1
                     reader.Read();
                     resultContent.Add("userid", reader.GetString("userid"));
                     resultContent.Add("name", reader.GetString("name"));
-                    resultContent.Add("lv", reader.GetString("lv"));
+                    resultContent.Add("lv", reader.GetInt32("lv"));
                     resultContent.Add("region", reader.GetString("region"));
-                    resultContent.Add("power", reader.GetString("power"));
+                    resultContent.Add("power", reader.GetInt32("power"));
                     reader.Close();
                 }
                 else
@@ -291,9 +291,9 @@ namespace ConsoleApp1
                     reader.Read();
                     resultContent.Add("userid", reader.GetString("userid"));
                     resultContent.Add("name", reader.GetString("name"));
-                    resultContent.Add("lv", reader.GetString("lv"));
+                    resultContent.Add("lv", reader.GetInt32("lv"));
                     resultContent.Add("region", reader.GetString("region"));
-                    resultContent.Add("power", reader.GetString("power"));
+                    resultContent.Add("power", reader.GetInt32("power"));
                     reader.Close();
                 }
             }
@@ -466,7 +466,7 @@ namespace ConsoleApp1
             return region;
         }
 
-        public static JObject StartGame(string userid)
+        public static JObject AddPower(string userid)
         {
             var resultContent = new JObject();
             MySqlConnection conn = new MySqlConnection(connectStr);//还未与数据库建立连接
@@ -475,11 +475,11 @@ namespace ConsoleApp1
                 conn.Open();//建立连接
                 Console.WriteLine("已经与数据库建立连接");
 
-                string sql = String.Format("UPDATE game1.usersinfo SET power = power - 10 WHERE userid = '{0}' ", userid);
+                string sql = String.Format("UPDATE game1.usersinfo SET power = power + 1 WHERE userid = '{0}' ", userid);
 
                 MySqlCommand cmd = new MySqlCommand(sql, conn);//数据库命令类
                 int result = cmd.ExecuteNonQuery();//返回值是数据库受影响行数的记录
-                if(result > 0)
+                if (result > 0)
                 {
                     resultContent.Add("result", "true");
                 }

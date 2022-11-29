@@ -1,5 +1,4 @@
-﻿using ConsoleApp1;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +10,11 @@ namespace WebSocketGame1
     internal class RankList
     {
         JObject m_list;
+        private static Timer timer;
         public RankList()
         {
             m_list = Tool.RankList();
-            Timer timer = new Timer(new TimerCallback(timerCall), this, 0,10000);//创建定时器
+            timer = new Timer(new TimerCallback(timerCall), this, 0,10000);//创建定时器
         }
 
         

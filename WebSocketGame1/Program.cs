@@ -1,5 +1,4 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using ConsoleApp1;
 using Fleck;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -8,11 +7,11 @@ using System.Net.Sockets;
 using System.Text;
 using WebSocketGame1;
 
-namespace MyApp // Note: actual namespace depends on the project name.
+namespace WebSocketGame1 // Note: actual namespace depends on the project name.
 {
     internal class Program
     {
-        enum Command
+        public enum Command
         {
             Login = 10001, //登录
             Register,
@@ -21,13 +20,15 @@ namespace MyApp // Note: actual namespace depends on the project name.
             Rank = 20001,
             RankList,
             StartGame = 30001,
+            AddUserPower,
         };
 
-        private static Dictionary<string, IWebSocketConnection> sockets = new Dictionary<string, IWebSocketConnection>();
+        public static Dictionary<string, IWebSocketConnection> sockets = new Dictionary<string, IWebSocketConnection>();
 
         static void Main(string[] args)
         {
             var ranklist = new RankList();
+            var userpower = new UserPower();
 
             var server = new WebSocketServer("ws://0.0.0.0:8181");
             server.Start(socket =>
@@ -65,6 +66,10 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                     Console.WriteLine("开始登陆");
                                     string qudaoid = dicContent["qudaoid"].ToString();
                                     var result = Tool.Login(qudaoid);
+                                    if (result["userid"] != null)
+                                    {
+                                        result.Add("powertime", userpower.GetPowerTime(result["userid"].ToString()));
+                                    }
                                     result.Add("command", dicContent["command"]);
                                     string resultStr = JsonConvert.SerializeObject(result);
                                     //返回给客户端
@@ -97,6 +102,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                     string qudaoid = dicContent["qudaoid"].ToString();
                                     string name = dicContent["name"].ToString();
                                     var result = Tool.Register(qudaoid, name);
+                                    result.Add("powertime", userpower.AddUser(userid, result["power"].ToString()));
                                     result.Add("command", dicContent["command"]);
                                     string resultStr = JsonConvert.SerializeObject(result);
                                     //返回给客户端
@@ -148,7 +154,8 @@ namespace MyApp // Note: actual namespace depends on the project name.
                                 break;
                             case Command.StartGame:
                                 {
-                                    var result = Tool.StartGame(userid);
+
+                                    var result = userpower.UpdatePower(userid, -10);
                                     result.Add("command", dicContent["command"]);
                                     string resultStr = JsonConvert.SerializeObject(result);
                                     //返回给客户端
